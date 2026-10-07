@@ -3,12 +3,12 @@
 FROM oven/bun:1-alpine AS deps
 WORKDIR /app
 COPY package.json bun.lock ./
-RUN apk add --no-cache ffmpeg
 
 RUN bun install --frozen-lockfile --production
 
 FROM oven/bun:1-alpine AS runtime
 WORKDIR /app
+RUN apk add --no-cache ffmpeg
 
 ENV NODE_ENV=production \
     PORT=3000
