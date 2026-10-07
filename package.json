@@ -1,0 +1,14 @@
+{
+  "name": "insta-dl",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "bun index.ts"
+  },
+  "dependencies": {
+    "sharp": "^0.35.5",
+    "hono": "^4.13.13"
+  },
+  "devDependencies": {}
+}
