@@ -1,12 +1,9 @@
 services:
-  erato:
+  insta_dl:
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    depends_on:
-      mongo:
-        condition: service_healthy
     environment:
       E_Z_KEY: ${E_Z_KEY}
       WH_735538297815957584: ${WH_735538297815957584}
