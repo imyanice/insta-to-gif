@@ -1,0 +1,20 @@
+services:
+  erato:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      E_Z_KEY: ${E_Z_KEY}
+      WH_735538297815957584: ${WH_735538297815957584}
+      KEY_735538297815957584: ${KEY_735538297815957584}
+    ports:
+      - "${INSTADL_PORT:-3000}:3000"
+    env_file: .env
+
+
+volumes:
+  mongo-data:
