@@ -249,7 +249,7 @@ app.post("/convert", async (c) => {
   const data = users.get(key as string);
   if (data) {
     const url: string = (await c.req.json()).url.match(
-      /https:\/\/www\.instagram\.com\/p\/([a-zA-Z0-9-_]+)\/.*/,
+      /https:\/\/www\.instagram\.com\/(?:reel|p)\/([a-zA-Z0-9-_]+)\/.*/,
     )[1];
     if (url) {
       void handleEverything(url, data);
