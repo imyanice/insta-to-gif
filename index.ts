@@ -3,10 +3,19 @@ import { Writable } from "node:stream";
 import sharp from "sharp";
 import { Hono } from "hono";
 
-const PORT = 6769;
+const PORT = 3000;
 
-const webhooks = {};
-const users = new Map<string, keyof typeof webhooks>([]);
+// this is yoinky but eh
+const alternative = {
+  "735538297815957584": uploadToEZ,
+} as { [p in keyof typeof webhooks]: (data: Buffer<ArrayBufferLike>) => Promise<string | null> };
+
+const webhooks = {
+  "735538297815957584": process.env["WH_735538297815957584"]!,
+};
+const users = new Map<string, keyof typeof webhooks>([
+  [process.env["KEY_735538297815957584"]!, "735538297815957584"],
+]);
 const app = new Hono();
 
 function getInstagramGraphQL(shortcode: string): string {
@@ -210,24 +219,63 @@ async function downloadToGIF(
   return [];
 }
 
-async function postToWebhook(data: Buffer, recipient: keyof typeof webhooks, name: string) {
+async function uploadToEZ(data: Buffer): Promise<string | null> {
   const form = new FormData();
-  form.append(
-    "payload_json",
-    JSON.stringify({
-      content: `for <@${recipient}>`,
-      files: [{ id: 0, filename: name }],
-    }),
-  );
-  form.append("files[0]", new Blob([Uint8Array.from(data)]), name);
+  form.append("file", new Blob([Uint8Array.from(data)], { type: "image/gif" }), "a.gif");
 
-  await fetch(webhooks[recipient], {
+  const res = await fetch("https://api.e-z.host/files", {
+    method: "POST",
+    headers: {
+      key: process.env.E_Z_KEY!,
+    },
+    body: form,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.log(`[error] - upload to e-z failed (${res.status}):`, text);
+    return null;
+  }
+
+  const json = await res.json();
+
+  return json.rawUrl;
+}
+
+async function postToWebhook(
+  data: Buffer,
+  recipient: keyof typeof webhooks,
+  name: string,
+  alternative: (data: Buffer) => Promise<string | null>,
+) {
+  const form = new FormData();
+  if (data.byteLength >= 1024 * 1024 * 20) {
+    console.log(`[info] - ${recipient} - using alternative upload method`);
+    const url = alternative(data);
+    if (url == null) {
+      console.log(`[info] - ${recipient} - alternative upload method failed`);
+      return;
+    }
+    form.append(
+      "payload_json",
+      JSON.stringify({
+        content: `for <@${recipient}>, ${url}`,
+      }),
+    );
+    console.log(`[info] - ${recipient} - alternative upload method: ${url}`);
+  } else {
+    form.append("files[0]", new Blob([Uint8Array.from(data)]), name);
+  }
+
+  const res = await fetch(webhooks[recipient], {
     method: "POST",
     body: form,
   });
+  if (!res.ok) console.log(res.status, await res.json(), data.byteLength);
 }
 
 async function handleEverything(shortcode: string, recipient: keyof typeof webhooks) {
+  console.log(`[info] - ${shortcode} for ${recipient}`);
   const ass = await getAssets(shortcode);
   if (!ass) return;
   const data = await downloadToGIF(shortcode, ass);
@@ -237,11 +285,12 @@ async function handleEverything(shortcode: string, recipient: keyof typeof webho
     console.log(`[info] - ${shortcode} - ${i}/${data.length} uploading to discord`);
     const ii = i;
     uploads.push(
-      postToWebhook(e, recipient, `${shortcode}-${i++}.gif`).then(() => {
+      postToWebhook(e, recipient, `${shortcode}-${i++}.gif`, alternative[recipient]).then(() => {
         console.log(`[info] - ${shortcode} - ${ii}/${data.length} uploaded to discord`);
       }),
     );
   }
+  Promise.all(uploads).then(() => console.log(`[info] - ${shortcode} - done`));
 }
 
 app.post("/convert", async (c) => {
