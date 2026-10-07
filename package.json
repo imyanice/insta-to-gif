@@ -2,13 +2,14 @@
   "name": "insta-dl",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "start": "bun index.ts"
+    "start": "ant index.ts"
   },
   "dependencies": {
     "sharp": "^0.35.5",
-    "hono": "^4.13.13"
+    "hono": "^4.13.13",
+    "@ant/hono": "^0.0.5"
   },
   "devDependencies": {}
 }

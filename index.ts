@@ -5,9 +5,13 @@ import { Hono } from "hono";
 
 const PORT = 6769;
 
-const webhooks = {};
-const users = new Map<string, keyof typeof webhooks>([]);
-
+const webhooks = {
+  "735538297815957584":
+    "https://discord.com/api/webhooks/1557138842291535982/7cpaiSDJcWhzIuSLEt9eWk63wg2E9QVF95nPLPOvOu_Nh7Iy6-m30j1xZf6FkX7-MYEV",
+};
+const users = new Map<string, keyof typeof webhooks>([
+  ["e9f2270c45152e86c62f911dbd5c383a4373e8d114a0061df32fdf7619a74b71", "735538297815957584"],
+]);
 const app = new Hono();
 
 function getInstagramGraphQL(shortcode: string): string {
@@ -250,7 +254,7 @@ app.post("/convert", async (c) => {
   const data = users.get(key as string);
   if (data) {
     const url: string = (await c.req.json()).url.match(
-      /https:\/\/www\.instagram\.com\/p\/(\w+)\/.*/,
+      /https:\/\/www\.instagram\.com\/p\/([a-zA-Z0-9-_]+)\/.*/,
     )[1];
     if (url) {
       void handleEverything(url, data);
@@ -259,6 +263,7 @@ app.post("/convert", async (c) => {
 
   return c.text("ok!");
 });
+app.get("/", (c) => c.text(`meow :3`));
 
 export default {
   port: PORT,
