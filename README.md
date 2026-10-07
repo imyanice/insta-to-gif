@@ -1,4 +1,5 @@
 # how-to
+- install ffmpeg
 - fill in:
 ```ts
 const webhooks = {
@@ -9,6 +10,7 @@ const users = new Map<string, keyof typeof webhooks>(["key":"id"]);
 - edit the port
 - run:
   ```sh
+  ant install
   ant start
   # ant index.ts
   # bun index.ts
