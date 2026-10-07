@@ -5,13 +5,8 @@ import { Hono } from "hono";
 
 const PORT = 6769;
 
-const webhooks = {
-  "735538297815957584":
-    "https://discord.com/api/webhooks/1557138842291535982/7cpaiSDJcWhzIuSLEt9eWk63wg2E9QVF95nPLPOvOu_Nh7Iy6-m30j1xZf6FkX7-MYEV",
-};
-const users = new Map<string, keyof typeof webhooks>([
-  ["e9f2270c45152e86c62f911dbd5c383a4373e8d114a0061df32fdf7619a74b71", "735538297815957584"],
-]);
+const webhooks = {};
+const users = new Map<string, keyof typeof webhooks>([]);
 const app = new Hono();
 
 function getInstagramGraphQL(shortcode: string): string {
