@@ -18,6 +18,30 @@ const users = new Map<string, keyof typeof webhooks>([
 ]);
 const app = new Hono();
 
+const wh_messages: [string, string, { body: FormData; method: "POST" }][] = [];
+
+type ExtractInnerArrayType<T extends Array<any>> = T extends Array<infer U> ? U : never;
+
+async function drain_uploads() {
+  let a: ExtractInnerArrayType<typeof wh_messages> | undefined;
+  while ((a = wh_messages.shift()) != undefined) {
+    const res = await fetch(a[1], a[2]);
+    if (res.ok) {
+      console.log(`[drain] - success - ${a[0]}`);
+      continue;
+    }
+    if (res.status === 429) {
+      wh_messages.push(a);
+      break;
+    } else {
+      console.log(`[drain] - failure - ${res.status}`, await res.text());
+      continue;
+    }
+  }
+}
+
+setInterval(drain_uploads, 1000 * 5);
+
 function getInstagramGraphQL(shortcode: string): string {
   return `https://www.instagram.com/graphql/query/?doc_id=24368985919464652&variables={"shortcode":"${shortcode}","fetch_tagged_user_count":null,"hoisted_comment_id":null,"hoisted_reply_id":null}`;
 }
@@ -271,6 +295,16 @@ async function postToWebhook(
     method: "POST",
     body: form,
   });
+  if (res.status === 429) {
+    wh_messages.push([
+      name,
+      webhooks[recipient],
+      {
+        method: "POST",
+        body: form,
+      },
+    ]);
+  }
   if (!res.ok) console.log(res.status, await res.json(), data.byteLength);
 }
 
